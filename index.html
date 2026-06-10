@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem PBD SK Felda Jengka 17</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & ReactDOM CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- Babel CDN untuk Kompilasi JSX Dalam Pelayar -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* Halangan cetakan standard untuk mod laporan */
+    @media print {
+      .no-print { display: none !important; }
+      .print-full { width: 100% !important; max-width: 100% !important; border: none !important; box-shadow: none !important; padding: 0 !important; }
+    }
+  </style>
+</head>
+<body class="h-full">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    const API_URL = "https://script.google.com/macros/s/AKfycbw1hDTCyIvRwDZ_gS6lYt22yEuDVd0aQGTRPgYeHhaCgq4ZcphPc3etURENnTC6lJkY/exec";
+
+    // Komponen Ikon SVG Pintar
+    const Icon = ({ name, className = "h-4 w-4" }) => {
+      const icons = {
+        home: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />,
+        bookOpen: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />,
+        award: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />,
+        fileText: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
+        layers: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />,
+        refreshCw: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H17" />,
+        alertTriangle: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />,
+        checkCircle: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />,
+        plus: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />,
+        trash2: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />,
+        edit: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />,
+        search: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />,
+        sun: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />,
+        moon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />,
+        download: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />,
+        userCheck: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />,
+        userPlus: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />,
+        trendingUp: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />,
+        printer: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />,
+        graduationCap: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />,
+        paperclip: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />,
+        upload: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />,
+        eye: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      };
+
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className={className}>
+          {icons[name] || <circle cx="12" cy="12" r="10" strokeWidth="2" />}
+        </svg>
+      );
+    };
+
+    const INITIAL_CLASSES = [
+      { id: '1-IS', year: '1', name: '1 Ibnu Sina', classTeacher: 'Pn. Siti Aminah' },
+      { id: '2-IS', year: '2', name: '2 Ibnu Sina', classTeacher: 'En. Zulkifli' },
+      { id: '3-IS', year: '3', name: '3 Ibnu Sina', classTeacher: 'Pn. Fatimah' },
+      { id: '4-IS', year: '4', name: '4 Ibnu Sina', classTeacher: 'En. Khairul' },
+      { id: '5-IS', year: '5', name: '5 Ibnu Sina', classTeacher: 'Pn. Hajar' },
+      { id: '6-IS', year: '6', name: '6 Ibnu Sina', classTeacher: 'Pn. Noraini' }
+    ];
+
+    const INITIAL_SUBJECTS = [
+      { code: 'BM', name: 'Bahasa Melayu', status: 'Aktif', ketuaPanitia: 'Pn. Rohana binti Sidek' },
+      { code: 'BI', name: 'Bahasa Inggeris', status: 'Aktif', ketuaPanitia: 'En. Justin Tan' },
+      { code: 'MT', name: 'Matematik', status: 'Aktif', ketuaPanitia: 'Pn. Nor Azlina' },
+      { code: 'SN', name: 'Sains', status: 'Aktif', ketuaPanitia: 'En. Ridzuan Harun' },
+      { code: 'BA', name: 'Bahasa Arab', status: 'Aktif', ketuaPanitia: 'Ustazah Mariah' },
+      { code: 'PI', name: 'Pendidikan Islam', status: 'Aktif', ketuaPanitia: 'Ustaz Azhar' },
+      { code: 'PJK', name: 'Pend. Jasmani & Kesihatan', status: 'Aktif', ketuaPanitia: 'En. Rosli' },
+      { code: 'MZ', name: 'Muzik', status: 'Aktif', ketuaPanitia: 'Pn. Sarah' },
+      { code: 'PSV', name: 'Pendidikan Seni Visual', status: 'Aktif', ketuaPanitia: 'Pn. Aminah' },
+      { code: 'RBT', name: 'Reka Bentuk & Teknologi', status: 'Aktif', ketuaPanitia: 'En. Fairuz' },
+      { code: 'SEJ', name: 'Sejarah', status: 'Aktif', ketuaPanitia: 'Pn. Fatimah' }
+    ];
+
+    const INITIAL_STUDENTS_PPT = [
+      { id: 'S001', name: 'AHMAD DANIEL BIN ROSLAN', mykid: '150112061234', class: '6 Ibnu Sina', BM: 4, BI: 3, MT: 5, SN: 4, BA: 4, PI: 5, PJK: 6, MZ: 5, PSV: 5, RBT: 4, SEJ: 4 },
+      { id: 'S002', name: 'SITI SARAH BINTI MOHD AMIN', mykid: '150314065678', class: '6 Ibnu Sina', BM: 5, BI: 5, MT: 4, SN: 5, BA: 5, PI: 6, PJK: 5, MZ: 4, PSV: 6, RBT: 5, SEJ: 5 },
+      { id: 'S003', name: 'MUHAMMAD ADAM BIN ZULKIFLI', mykid: '150520069012', class: '6 Ibnu Sina', BM: 3, BI: 2, MT: 3, SN: 3, BA: 2, PI: 4, PJK: 5, MZ: 3, PSV: 4, RBT: 3, SEJ: 3 },
+      { id: 'S004', name: 'NURUL IZZAH BINTI KHAIRUL ANUAR', mykid: '150708064321', class: '5 Ibnu Sina', BM: 5, BI: 4, MT: 5, SN: 5, BA: 4, PI: 5, PJK: 6, MZ: 5, PSV: 5, RBT: 5, SEJ: 4 },
+      { id: 'S005', name: 'HARIS HAKIMI BIN MOHD SAFRI', mykid: '160222067789', class: '4 Ibnu Sina', BM: 2, BI: 2, MT: 0, SN: 2, BA: 3, PI: 3, PJK: 4, MZ: 3, PSV: 3, RBT: 2, SEJ: 2 }
+    ];
+
+    const INITIAL_STUDENTS_PAT = [
+      { id: 'S001', name: 'AHMAD DANIEL BIN ROSLAN', mykid: '150112061234', class: '6 Ibnu Sina', BM: 5, BI: 4, MT: 5, SN: 5, BA: 5, PI: 5, PJK: 6, MZ: 5, PSV: 5, RBT: 5, SEJ: 5 },
+      { id: 'S002', name: 'SITI SARAH BINTI MOHD AMIN', mykid: '150314065678', class: '6 Ibnu Sina', BM: 6, BI: 5, MT: 5, SN: 6, BA: 5, PI: 6, PJK: 6, MZ: 5, PSV: 6, RBT: 5, SEJ: 6 },
+      { id: 'S003', name: 'MUHAMMAD ADAM BIN ZULKIFLI', mykid: '150520069012', class: '6 Ibnu Sina', BM: 4, BI: 3, MT: 3, SN: 4, BA: 3, PI: 4, PJK: 5, MZ: 4, PSV: 4, RBT: 4, SEJ: 4 },
+      { id: 'S004', name: 'NURUL IZZAH BINTI KHAIRUL ANUAR', mykid: '150708064321', class: '5 Ibnu Sina', BM: 6, BI: 5, MT: 6, SN: 5, BA: 5, PI: 6, PJK: 6, MZ: 5, PSV: 5, RBT: 5, SEJ: 5 },
+      { id: 'S005', name: 'HARIS HAKIMI BIN MOHD SAFRI', mykid: '160222067789', class: '4 Ibnu Sina', BM: 3, BI: 3, MT: 2, SN: 3, BA: 3, PI: 4, PJK: 4, MZ: 3, PSV: 4, RBT: 3, SEJ: 3 }
+    ];
+
+    const INITIAL_INTERVENTIONS = [
+      { id: 'INT001', studentId: 'S005', subjectCode: 'MT', date: '2026-04-12', activity: 'Latihan Intensif Sifir & Modul Asas', notes: 'Kurang menguasai konsep pendaraban', followUp: 'Kelas bimbingan mingguan', status: 'Dalam Proses', evidence: '' }
+    ];
+
+    const TP_COLORS = {
+      0: { bg: 'bg-slate-400 text-slate-900', hex: '#94a3b8', border: 'border-slate-500', name: 'BD (Belum Dinilai)' },
+      1: { bg: 'bg-red-800 text-white', hex: '#991b1b', border: 'border-red-950', name: 'TP1' },
+      2: { bg: 'bg-red-500 text-white', hex: '#ef4444', border: 'border-red-600', name: 'TP2' },
+      3: { bg: 'bg-orange-500 text-white', hex: '#f97316', border: 'border-orange-600', name: 'TP3' },
+      4: { bg: 'bg-yellow-400 text-black', hex: '#eab308', border: 'border-yellow-500', name: 'TP4' },
+      5: { bg: 'bg-blue-500 text-white', hex: '#3b82f6', border: 'border-blue-600', name: 'TP5' },
+      6: { bg: 'bg-emerald-500 text-white', hex: '#10b981', border: 'border-emerald-600', name: 'TP6' },
+    };
+
+    const getTafsiranPedagogi = (subjectCode, tpValue) => {
+      if (!tpValue || tpValue === 0) return "Murid belum dinilai/ditaksir bagi subjek ini.";
+      const databaseTafsiran = {
+        1: "Murid tahu, faham dan boleh melakukan kemahiran paling asas serta perkara minimum berkaitan bidang subjek ini.",
+        2: "Murid menunjukkan kefahaman asas untuk menterjemah serta membina kemahiran asas subjek ini dalam situasi terkawal.",
+        3: "Murid boleh mengaplikasikan pengetahuan dan kemahiran asas secara sistematik untuk menyelesaikan tugasan mudah.",
+        4: "Murid boleh menganalisis kemahiran, melaksanakan tugasan dengan cekap serta berupaya bekerja secara berdikari.",
+        5: "Murid boleh membuat penilaian, menjustifikasi tindakan menyelesaikan masalah kompleks secara tersusun dan kreatif.",
+        6: "Murid boleh menghasilkan idea, product yang kreatif dan inovatif serta berupaya membimbing murid lain secara teladan."
+      };
+      return databaseTafsiran[tpValue] || "Menunjukkan prestasi penguasaan pembelajaran.";
+    };
+
+    /* KOMPONEN GRAF NATIVE SVG */
+    function BarChartPBD({ data, categories }) {
+      const maxVal = Math.max(...Object.values(data), 1);
+      const chartHeight = 160;
+      return (
+        <svg viewBox="0 0 450 200" className="w-full h-48 text-slate-800 dark:text-slate-200">
+          {categories.map((cat, idx) => {
+            const val = data[cat] || 0;
+            const barHeight = (val / maxVal) * chartHeight;
+            const x = 50 + idx * 55;
+            const y = 180 - barHeight;
+            const color = TP_COLORS[cat]?.hex || '#3b82f6';
+            return (
+              <g key={cat}>
+                <rect x={x} y={y} width="30" height={barHeight} fill={color} rx="4" />
+                <text x={x + 15} y={y - 8} textAnchor="middle" fontSize="10" fontWeight="bold" fill="currentColor">
+                  {val}
+                </text>
+                <text x={x + 15} y="195" textAnchor="middle" fontSize="10" fontWeight="bold" fill="currentColor">
+                  {cat === '0' ? 'BD' : `TP${cat}`}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      );
+    }
+
+    function DonutChartPBD({ data }) {
+      const total = Object.values(data).reduce((a, b) => a + b, 0) || 1;
+      const categories = [
+        { label: 'Sangat Terhad (TP1-2)', value: (data[1] || 0) + (data[2] || 0), color: '#ef4444' },
+        { label: 'Sederhana (TP3-4)', value: (data[3] || 0) + (data[4] || 0), color: '#eab308' },
+        { label: 'Cemerlang (TP5-6)', value: (data[5] || 0) + (data[6] || 0), color: '#10b981' },
+        { label: 'Belum Dinilai (BD)', value: data[0] || 0, color: '#94a3b8' }
+      ];
+
+      let accumulatedPercent = 0;
+      return (
+        <div className="flex flex-col sm:flex-row items-center gap-6 justify-center">
+          <svg viewBox="0 0 160 160" className="w-36 h-36">
+            <circle cx="80" cy="80" r="70" fill="transparent" stroke="#e2e8f0" strokeWidth="15" />
+            {categories.map((cat, idx) => {
+              const percent = (cat.value / total) * 100;
+              if (percent === 0) return null;
+              const strokeDash = `${percent} ${100 - percent}`;
+              const strokeOffset = 100 - accumulatedPercent + 25;
+              accumulatedPercent += percent;
+              return (
+                <circle
+                  key={idx}
+                  cx="80"
+                  cy="80"
+                  r="35"
+                  fill="transparent"
+                  stroke={cat.color}
+                  strokeWidth="20"
+                  strokeDasharray={`${percent} 100`}
+                  strokeDashoffset={strokeOffset}
+                  transform="rotate(-90 80 80)"
+                  pathLength="100"
+                />
+              );
+            })}
+            <circle cx="80" cy="80" r="25" fill="white" className="dark:fill-slate-900" />
+          </svg>
+          <div className="text-xs space-y-1.5 text-slate-800 dark:text-slate-200">
+            {categories.map((cat, idx) => {
+              const pct = ((cat.value / total) * 100).toFixed(1);
+              return (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
+                  <span className="font-semibold">{cat.label}:</span>
+                  <span className="font-bold text-blue-500">{cat.value} ({pct}%)</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    function LineChartPBD({ dataPPT, dataPAT, labels }) {
+      const chartHeight = 120;
+      const maxVal = 6;
+      const getPoints = (data) => {
+        return labels.map((lbl, idx) => {
+          const val = parseFloat(data[lbl] || 0);
+          const x = 50 + idx * 40;
+          const y = 150 - (val / maxVal) * chartHeight;
+          return { x, y, val };
+        });
+      };
+
+      const pointsPPT = getPoints(dataPPT);
+      const pointsPAT = getPoints(dataPAT);
+
+      const pptPath = pointsPPT.map(p => `${p.x},${p.y}`).join(' ');
+      const patPath = pointsPAT.map(p => `${p.x},${p.y}`).join(' ');
+
+      return (
+        <svg viewBox="0 0 520 180" className="w-full h-44 text-slate-800 dark:text-slate-200">
+          {/* Grid Y */}
+          {[0, 1, 2, 3, 4, 5, 6].map(val => {
+            const y = 150 - (val / maxVal) * chartHeight;
+            return (
+              <g key={val} className="opacity-25">
+                <line x1="40" y1={y} x2="500" y2={y} stroke="currentColor" strokeWidth="1" strokeDasharray="3,3" />
+                <text x="25" y={y + 4} fontSize="8" fontWeight="bold" fill="currentColor">{val}</text>
+              </g>
+            );
+          })}
+
+          {/* PPT (Biru) */}
+          {pptPath && <polyline fill="none" stroke="#3b82f6" strokeWidth="2.5" points={pptPath} />}
+          {/* PAT (Hijau) */}
+          {patPath && <polyline fill="none" stroke="#10b981" strokeWidth="2.5" points={patPath} strokeDasharray="2,2" />}
+
+          {pointsPPT.map((p, idx) => (
+            <circle key={`ppt-${idx}`} cx={p.x} cy={p.y} r="3.5" fill="#3b82f6" className="cursor-pointer">
+              <title>PPT: {p.val}</title>
+            </circle>
+          ))}
+
+          {pointsPAT.map((p, idx) => (
+            <circle key={`pat-${idx}`} cx={p.x} cy={p.y} r="3.5" fill="#10b981" className="cursor-pointer">
+              <title>PAT: {p.val}</title>
+            </circle>
+          ))}
+
+          {labels.map((lbl, idx) => (
+            <text key={lbl} x={50 + idx * 40} y="170" textAnchor="middle" fontSize="8" fontWeight="bold" fill="currentColor">
+              {lbl}
+            </text>
+          ))}
+        </svg>
+      );
+    }
+
+    const App = () => {
+      const [darkMode, setDarkMode] = useState(false);
+      const [activeTab, setActiveTab] = useState('paparan-utama');
+      
+      const [classes, setClasses] = useState(() => {
+        const saved = localStorage.getItem('pbd_classes');
+        return saved ? JSON.parse(saved) : INITIAL_CLASSES;
+      });
+      const [subjects, setSubjects] = useState(() => {
+        const saved = localStorage.getItem('pbd_subjects');
+        return saved ? JSON.parse(saved) : INITIAL_SUBJECTS;
+      });
+      const [studentsPPT, setStudentsPPT] = useState(() => {
+        const saved = localStorage.getItem('pbd_students_ppt');
+        return saved ? JSON.parse(saved) : INITIAL_STUDENTS_PPT;
+      });
+      const [studentsPAT, setStudentsPAT] = useState(() => {
+        const saved = localStorage.getItem('pbd_students_pat');
+        return saved ? JSON.parse(saved) : INITIAL_STUDENTS_PAT;
+      });
+      const [interventions, setInterventions] = useState(() => {
+        const saved = localStorage.getItem('pbd_interventions');
+        return saved ? JSON.parse(saved) : INITIAL_INTERVENTIONS;
+      });
+
+      const [auditLogs, setAuditLogs] = useState([
+        { timestamp: new Date().toLocaleString('ms-MY'), role: 'Sistem', message: 'Sistem PBD SK Felda Jengka 17 berjaya dimulakan.' }
+      ]);
+
+      const [selectedClass, setSelectedClass] = useState('6 Ibnu Sina');
+      const [selectedSubject, setSelectedSubject] = useState('BM');
+      const [selectedTerm, setSelectedTerm] = useState('PPT');
+      const [searchQuery, setSearchQuery] = useState('');
+      const [syncStatus, setSyncStatus] = useState('idle');
+      const [lastSyncTime, setLastSyncTime] = useState(null);
+
+      const [selectedReportStudentId, setSelectedReportStudentId] = useState('');
+      const [reportSubTab, setReportSubTab] = useState('slip-individu');
+
+      const [toasts, setToasts] = useState([]);
+      
+      const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => {},
+        onCancel: () => {}
+      });
+
+      const [isAddingClass, setIsAddingClass] = useState(false);
+      const [classForm, setClassForm] = useState({ id: '', year: '1', name: '', classTeacher: '' });
+
+      const [isAddingStudent, setIsAddingStudent] = useState(false);
+      const [studentForm, setStudentForm] = useState({ id: '', name: '', mykid: '', class: '' });
+      const [editingStudentId, setEditingStudentId] = useState(null);
+      const [studentManageClassFilter, setStudentManageClassFilter] = useState('Semua');
+
+      const [isAddingSubject, setIsAddingSubject] = useState(false);
+      const [subjectForm, setSubjectForm] = useState({ code: '', name: '', status: 'Aktif', ketuaPanitia: '' });
+      const [editingSubjectCode, setEditingSubjectCode] = useState(null);
+
+      const [isAddingIntervention, setIsAddingIntervention] = useState(false);
+      const [interventionForm, setInterventionForm] = useState({ studentId: '', subjectCode: 'BM', date: new Date().toISOString().split('T')[0], activity: '', notes: '', followUp: '', status: 'Dalam Proses', evidence: '' });
+      const [evidenceMode, setEvidenceMode] = useState('text');
+      const [viewingEvidence, setViewingEvidence] = useState(null);
+
+      const user = { name: 'Pentadbir Utama', role: 'Pentadbir Sistem PBD' };
+
+      // Kofigurasi Tema Dinamik Berdasarkan Penggal Pentaksiran
+      const t = useMemo(() => {
+        const isPPT = selectedTerm === 'PPT';
+        return {
+          main: isPPT ? 'blue' : 'emerald',
+          bg: isPPT ? 'bg-blue-600' : 'bg-emerald-600',
+          bgHover: isPPT ? 'hover:bg-blue-500' : 'hover:bg-emerald-500',
+          text: isPPT ? 'text-blue-600' : 'text-emerald-600',
+          textLight: isPPT ? 'text-blue-500' : 'text-emerald-500',
+          textLighter: isPPT ? 'text-blue-400' : 'text-emerald-400',
+          bgLight: isPPT ? 'bg-blue-500/10' : 'bg-emerald-500/10',
+          ring: isPPT ? 'focus:ring-blue-500' : 'focus:ring-emerald-500',
+          ringStatic: isPPT ? 'ring-blue-500' : 'ring-emerald-500',
+          shadow: isPPT ? 'shadow-blue-500/20' : 'shadow-emerald-500/20',
+          shadowBtn: isPPT ? 'shadow-blue-500/10' : 'shadow-emerald-500/10',
+          border: isPPT ? 'border-blue-500/30' : 'border-emerald-500/30',
+          banner: isPPT ? 'from-blue-700 via-indigo-800 to-violet-900' : 'from-emerald-700 via-teal-800 to-green-900',
+          svgFill: isPPT ? '#3b82f6' : '#10b981',
+          svgStroke: isPPT ? '#1d4ed8' : '#047857'
+        };
+      }, [selectedTerm]);
+
+      // SIMPAN SECARA AUTOMATIK KE LOCALSTORAGE SETIAP KALI KEADAAN BERUBAH
+      useEffect(() => {
+        localStorage.setItem('pbd_classes', JSON.stringify(classes));
+      }, [classes]);
+      useEffect(() => {
+        localStorage.setItem('pbd_subjects', JSON.stringify(subjects));
+      }, [subjects]);
+      useEffect(() => {
+        localStorage.setItem('pbd_students_ppt', JSON.stringify(studentsPPT));
+      }, [studentsPPT]);
+      useEffect(() => {
+        localStorage.setItem('pbd_students_pat', JSON.stringify(studentsPAT));
+      }, [studentsPAT]);
+      useEffect(() => {
+        localStorage.setItem('pbd_interventions', JSON.stringify(interventions));
+      }, [interventions]);
+
+      const triggerToast = (message, type = 'success') => {
+        const id = Date.now();
+        setToasts(prev => [...prev, { id, message, type }]);
+        setTimeout(() => {
+          setToasts(prev => prev.filter(t => t.id !== id));
+        }, 4000);
+      };
+
+      const askConfirmation = (title, message, callback) => {
+        setConfirmModal({
+          isOpen: true,
+          title,
+          message,
+          onConfirm: () => {
+            callback();
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          },
+          onCancel: () => {
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          }
+        });
+      };
+
+      const logAction = (role, message) => {
+        const newLog = {
+          timestamp: new Date().toLocaleString('ms-MY'),
+          role: role || 'Sistem',
+          message
+        };
+        setAuditLogs(prev => {
+          const updated = [newLog, ...prev].slice(0, 100);
+          localStorage.setItem('pbd_audit_logs', JSON.stringify(updated));
+          return updated;
+        });
+      };
+
+      // FUNGSI MEMBACA DATA (PULL) - Auto-Sync Tanpa Ralat Konsol Jika Disekat
+      const fetchLiveGSheetsData = async (quiet = false) => {
+        if (!quiet) setSyncStatus('loading');
+        try {
+          const response = await fetch(`${API_URL}?t=${Date.now()}`, {
+            method: 'GET',
+            redirect: 'follow'
+          });
+          if (!response.ok) throw new Error("Gagal menyambung ke pelayan Web App.");
+          const json = await response.json();
+          
+          if (json.success && json.data) {
+            const d = json.data;
+            if (d.classes && d.classes.length > 0) {
+              setClasses(d.classes.map(c => ({
+                id: String(c.id || ''),
+                year: String(c.year || ''),
+                name: String(c.name || ''),
+                classTeacher: String(c['class teacher'] || c.classTeacher || 'Tiada Guru')
+              })));
+            }
+            if (d.subjects && d.subjects.length > 0) {
+              setSubjects(d.subjects.map(s => ({
+                code: String(s.code || ''),
+                name: String(s.name || ''),
+                status: String(s.status || 'Aktif'),
+                ketuaPanitia: String(s['ketua panitia'] || s.ketuaPanitia || '')
+              })));
+            }
+            if (d.students_ppt && d.students_ppt.length > 0) {
+              setStudentsPPT(d.students_ppt.map(s => {
+                const temp = { 
+                  id: String(s.id || ''),
+                  name: String(s.name || ''),
+                  mykid: String(s.mykid || ''),
+                  class: String(s.class || '')
+                };
+                ['BM','BI','MT','SN','BA','PI','PJK','MZ','PSV','RBT','SEJ'].forEach(sub => {
+                  temp[sub] = s[sub] !== undefined ? (parseInt(s[sub], 10) || 0) : 0;
+                });
+                return temp;
+              }));
+            }
+            if (d.students_pat && d.students_pat.length > 0) {
+              setStudentsPAT(d.students_pat.map(s => {
+                const temp = { 
+                  id: String(s.id || ''),
+                  name: String(s.name || ''),
+                  mykid: String(s.mykid || ''),
+                  class: String(s.class || '')
+                };
+                ['BM','BI','MT','SN','BA','PI','PJK','MZ','PSV','RBT','SEJ'].forEach(sub => {
+                  temp[sub] = s[sub] !== undefined ? (parseInt(s[sub], 10) || 0) : 0;
+                });
+                return temp;
+              }));
+            }
+            if (d.interventions && d.interventions.length > 0) setInterventions(d.interventions);
+            if (d.auditLogs && d.auditLogs.length > 0) setAuditLogs(d.auditLogs);
+
+            setLastSyncTime(new Date().toLocaleTimeString('ms-MY'));
+            setSyncStatus('success');
+            if (!quiet) triggerToast("Data berjaya disegerakkan dari Google Sheets secara dua-hala!");
+          } else {
+            throw new Error(json.error || "Ralat format data Google Sheets.");
+          }
+        } catch (err) {
+          if (!quiet) {
+            console.warn("Rangkaian disekat (mod tempatan): Menggunakan data LocalStorage.");
+          }
+          setSyncStatus('offline');
+        }
+      };
+
+      // FUNGSI MENULIS DATA (PUSH) - Auto-Sync Masa Nyata
+      const pushToCloud = async (action, payload) => {
+        setSyncStatus('loading');
+        try {
+          const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'text/plain;charset=utf-8' 
+            },
+            body: JSON.stringify({ action, ...payload }),
+            redirect: 'follow'
+          });
+          
+          const result = await response.json();
+          if (result.success) {
+            setSyncStatus('success');
+            triggerToast("Data awan Google Sheets berjaya dikemaskini secara langsung!");
+            fetchLiveGSheetsData(true);
+          } else {
+            throw new Error(result.error || "Ralat maklum balas pelayan.");
+          }
+        } catch (err) {
+          console.warn("Gagal menghantar ke awan. Disimpan secara tempatan dalam LocalStorage.", err.message);
+          setSyncStatus('offline');
+        }
+      };
+
+      // Background Polling setiap 15 saat
+      useEffect(() => {
+        const savedDarkMode = localStorage.getItem('pbd_dark_mode');
+        if (savedDarkMode) setDarkMode(JSON.parse(savedDarkMode));
+
+        fetchLiveGSheetsData(false);
+
+        const intervalId = setInterval(() => {
+          fetchLiveGSheetsData(true);
+        }, 15000);
+
+        return () => clearInterval(intervalId);
+      }, []);
+
+      const getStudentName = (studentId) => {
+        const student = studentsPPT.find(s => s.id === studentId) || studentsPAT.find(s => s.id === studentId);
+        return student ? student.name : "Nama Tidak Ditemui";
+      };
+
+      const getStudentClass = (studentId) => {
+        const student = studentsPPT.find(s => s.id === studentId) || studentsPAT.find(s => s.id === studentId);
+        return student ? student.class : "Tiada Kelas";
+      };
+
+      const getStudentMyKid = (studentId) => {
+        const student = studentsPPT.find(s => s.id === studentId) || studentsPAT.find(s => s.id === studentId);
+        return student ? student.mykid : "Tiada MyKid";
+      };
+
+      const sortedStudentsSearch = useMemo(() => {
+        const list = selectedTerm === 'PPT' ? studentsPPT : studentsPAT;
+        
+        const filtered = list.filter(s => {
+          const nameMatch = String(s.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+          const mykidMatch = String(s.mykid || '').includes(searchQuery);
+          const classMatch = String(s.class || '').toLowerCase().includes(searchQuery.toLowerCase());
+          return nameMatch || mykidMatch || classMatch;
+        });
+
+        const getYearNumber = (className) => {
+          const match = String(className || '').match(/^(\d+)/);
+          return match ? parseInt(match[1], 10) : 99; 
+        };
+
+        return [...filtered].sort((a, b) => {
+          const yearA = getYearNumber(a.class);
+          const yearB = getYearNumber(b.class);
+          
+          if (yearA !== yearB) return yearA - yearB;
+          
+          const classCompare = String(a.class || '').localeCompare(String(b.class || ''));
+          if (classCompare !== 0) return classCompare;
+          
+          return String(a.name || '').localeCompare(String(b.name || ''));
+        });
+      }, [studentsPPT, studentsPAT, selectedTerm, searchQuery]);
+
+      const classStats = useMemo(() => {
+        const list = selectedTerm === 'PPT' ? studentsPPT : studentsPAT;
+        const classFiltered = list.filter(s => s.class === selectedClass);
+        
+        let totalScore = 0;
+        let gradedCount = 0;
+        const subjectAverages = {};
+        const distribution = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+
+        subjects.forEach(sub => {
+          let subSum = 0;
+          let subGraded = 0;
+          classFiltered.forEach(student => {
+            const rawScore = student[sub.code];
+            const score = (typeof rawScore === 'number' && !isNaN(rawScore)) ? rawScore : 0;
+            
+            distribution[score] = (distribution[score] || 0) + 1;
+            if (score > 0) { 
+              subSum += score;
+              subGraded++;
+              totalScore += score;
+              gradedCount++;
+            }
+          });
+          subjectAverages[sub.code] = subGraded > 0 ? (subSum / subGraded).toFixed(2) : '0.00';
+        });
+
+        const averageTP = gradedCount > 0 ? (totalScore / gradedCount).toFixed(2) : '0.00';
+
+        return {
+          totalInClass: classFiltered.length,
+          averageTP,
+          subjectAverages,
+          distribution,
+          classFiltered
+        };
+      }, [selectedClass, selectedTerm, studentsPPT, studentsPAT, subjects]);
+
+      const globalStats = useMemo(() => {
+        const list = selectedTerm === 'PPT' ? studentsPPT : studentsPAT;
+        let totalScore = 0;
+        let gradedCount = 0;
+        const globalDistribution = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+
+        list.forEach(student => {
+          subjects.forEach(sub => {
+            const rawScore = student[sub.code];
+            const score = (typeof rawScore === 'number' && !isNaN(rawScore)) ? rawScore : 0;
+            
+            globalDistribution[score] = (globalDistribution[score] || 0) + 1;
+            if (score > 0) {
+              totalScore += score;
+              gradedCount++;
+            }
+          });
+        });
+
+        const averageTP = gradedCount > 0 ? (totalScore / gradedCount).toFixed(2) : '0.00';
+
+        return {
+          totalStudents: list.length,
+          totalClasses: classes.length,
+          averageTP,
+          globalDistribution
+        };
+      }, [selectedTerm, studentsPPT, studentsPAT, classes, subjects]);
+
+      const analysisStats = useMemo(() => {
+        const listPPT = studentsPPT.filter(s => s.class === selectedClass);
+        const listPAT = studentsPAT.filter(s => s.class === selectedClass);
+
+        const distribution = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+        const currentList = selectedTerm === 'PPT' ? listPPT : listPAT;
+
+        currentList.forEach(student => {
+          const rawScore = student[selectedSubject];
+          const score = (typeof rawScore === 'number' && !isNaN(rawScore)) ? rawScore : 0;
+          distribution[score] = (distribution[score] || 0) + 1;
+        });
+
+        const lineLabels = subjects.map(s => s.code);
+        const lineDataPPT = {};
+        const lineDataPAT = {};
+
+        subjects.forEach(sub => {
+          let sumPPT = 0, countPPT = 0;
+          listPPT.forEach(student => {
+            const score = student[sub.code] || 0;
+            if (score > 0) { sumPPT += score; countPPT++; }
+          });
+          lineDataPPT[sub.code] = countPPT > 0 ? (sumPPT / countPPT).toFixed(2) : 0;
+
+          let sumPAT = 0, countPAT = 0;
+          listPAT.forEach(student => {
+            const score = student[sub.code] || 0;
+            if (score > 0) { sumPAT += score; countPAT++; }
+          });
+          lineDataPAT[sub.code] = countPAT > 0 ? (sumPAT / countPAT).toFixed(2) : 0;
+        });
+
+        return {
+          barData: distribution,
+          donutData: distribution,
+          lineLabels,
+          lineDataPPT,
+          lineDataPAT
+        };
+      }, [selectedClass, selectedSubject, selectedTerm, studentsPPT, studentsPAT, subjects]);
+
+      const handleAddClass = (e) => {
+        e.preventDefault();
+        if (!classForm.name || !classForm.classTeacher) {
+          triggerToast("Sila isi semua maklumat kelas.", "error");
+          return;
+        }
+        const classId = classForm.id || `${classForm.year}-${classForm.name.replace(/\s+/g, '-').toUpperCase()}`;
+        const newClass = { id: classId, year: classForm.year, name: classForm.name, classTeacher: classForm.classTeacher };
+        
+        setClasses(prev => [...prev, newClass]);
+        logAction(user.name, `Menambah kelas baru: ${classForm.name}`);
+        pushToCloud("saveClass", { data: newClass });
+        
+        setIsAddingClass(false);
+        setClassForm({ id: '', year: '1', name: '', classTeacher: '' });
+      };
+
+      const handleDeleteClass = (classId, className) => {
+        askConfirmation("Padam Kelas", `Adakah anda pasti mahu memadam kelas "${className}"?`, () => {
+          setClasses(prev => prev.filter(c => c.id !== classId));
+          logAction(user.name, `Memadam kelas: ${className}`);
+          pushToCloud("deleteClass", { id: classId });
+        });
+      };
+
+      const handleSaveStudent = (e) => {
+        e.preventDefault();
+        if (!studentForm.name || !studentForm.mykid || !studentForm.class) {
+          triggerToast("Sila isi semua maklumat murid.", "error");
+          return;
+        }
+
+        const studentId = studentForm.id || `S${Date.now()}`;
+        const dataMurid = { 
+          id: String(studentId), 
+          name: String(studentForm.name).toUpperCase(), 
+          mykid: String(studentForm.mykid), 
+          class: String(studentForm.class) 
+        };
+
+        if (editingStudentId) {
+          const updateList = (list) => list.map(s => s.id === editingStudentId ? { ...s, ...dataMurid } : s);
+          setStudentsPPT(updateList(studentsPPT));
+          setStudentsPAT(updateList(studentsPAT));
+          logAction(user.name, `Mengemaskini profil murid: ${studentForm.name}`);
+        } else {
+          const freshMurid = { ...dataMurid };
+          subjects.forEach(sub => freshMurid[sub.code] = 0);
+
+          setStudentsPPT(prev => [...prev, freshMurid]);
+          setStudentsPAT(prev => [...prev, freshMurid]);
+          logAction(user.name, `Mendaftar murid baharu: ${studentForm.name}`);
+        }
+
+        pushToCloud("saveStudent", { data: dataMurid });
+        setIsAddingStudent(false);
+        setEditingStudentId(null);
+        setStudentForm({ id: '', name: '', mykid: '', class: '' });
+      };
+
+      const handleDeleteStudent = (id, name) => {
+        askConfirmation("Padam Profil Murid", `Adakah anda pasti mahu memadam murid "${name}" dari pangkalan data PPT & PAT?`, () => {
+          setStudentsPPT(prev => prev.filter(s => s.id !== id));
+          setStudentsPAT(prev => prev.filter(s => s.id !== id));
+          logAction(user.name, `Memadam profil murid: ${name}`);
+          pushToCloud("deleteStudent", { id });
+        });
+      };
+
+      const handleSaveSubject = (e) => {
+        e.preventDefault();
+        if (!subjectForm.code || !subjectForm.name) {
+          triggerToast("Kod dan Nama Subjek wajib diisi.", "error");
+          return;
+        }
+
+        const payloadSubject = {
+          code: String(subjectForm.code),
+          name: String(subjectForm.name),
+          status: String(subjectForm.status),
+          "ketua panitia": String(subjectForm.ketuaPanitia)
+        };
+
+        if (editingSubjectCode) {
+          setSubjects(prev => prev.map(s => s.code === editingSubjectCode ? { ...subjectForm } : s));
+          logAction(user.name, `Mengemaskini subjek: ${subjectForm.name}`);
+        } else {
+          setSubjects(prev => [...prev, subjectForm]);
+          logAction(user.name, `Menambah subjek baru: ${subjectForm.name}`);
+        }
+
+        pushToCloud("saveSubject", { data: payloadSubject });
+        setIsAddingSubject(false);
+        setEditingSubjectCode(null);
+        setSubjectForm({ code: '', name: '', status: 'Aktif', ketuaPanitia: '' });
+      };
+
+      const handleDeleteSubject = (code, name) => {
+        askConfirmation("Padam Subjek", `Adakah anda pasti mahu memadam subjek "${name}"?`, () => {
+          setSubjects(prev => prev.filter(s => s.code !== code));
+          logAction(user.name, `Memadam subjek: ${name}`);
+          pushToCloud("deleteSubject", { code });
+        });
+      };
+
+      const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+        if (!allowedTypes.includes(file.type)) {
+          triggerToast("Hanya fail PDF, JPG, JPEG & PNG dibenarkan.", "error");
+          e.target.value = "";
+          return;
+        }
+
+        if (file.size > 150 * 1024) {
+          triggerToast("Saiz fail melebihi 150KB. Sila pilih fail atau imej yang lebih kecil.", "error");
+          e.target.value = "";
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          const fileData = {
+            name: file.name,
+            type: file.type,
+            data: reader.result
+          };
+          setInterventionForm(prev => ({ ...prev, evidence: JSON.stringify(fileData) }));
+          triggerToast("Fail evidens dimuat naik secara lokal.");
+        };
+        reader.readAsDataURL(file);
+      };
+
+      const handleAddIntervention = (e) => {
+        e.preventDefault();
+        if (!interventionForm.studentId || !interventionForm.activity) {
+          triggerToast("Sila pilih murid sasaran dan aktiviti.", "error");
+          return;
+        }
+
+        const uniqueId = `INT-${Date.now()}`;
+        const newInt = { ...interventionForm, id: uniqueId };
+
+        setInterventions(prev => [...prev, newInt]);
+        logAction(user.name, `Menambah rekod intervensi baharu bagi ID Pelajar: ${interventionForm.studentId}`);
+        pushToCloud("saveIntervention", { data: newInt });
+
+        setIsAddingIntervention(false);
+        setInterventionForm({ studentId: '', subjectCode: 'BM', date: new Date().toISOString().split('T')[0], activity: '', notes: '', followUp: '', status: 'Dalam Proses', evidence: '' });
+        setEvidenceMode('text');
+      };
+
+      const handleDeleteIntervention = (id) => {
+        askConfirmation("Padam Rekod Intervensi", "Adakah anda pasti mahu memadam rekod intervensi ini?", () => {
+          setInterventions(prev => prev.filter(i => i.id !== id));
+          logAction(user.name, `Memadam rekod intervensi ID: ${id}`);
+          pushToCloud("deleteIntervention", { id });
+        });
+      };
+
+      // TELA DIKEMAS KINI: Menambah semula fungsi handleUpdateTP yang tertinggal
+      const handleUpdateTP = (studentId, subjectCode, newGrade) => {
+        const numGrade = parseInt(newGrade, 10);
+        const sanitizedGrade = isNaN(numGrade) ? 0 : numGrade;
+        
+        if (selectedTerm === 'PPT') {
+          setStudentsPPT(prev => prev.map(s => s.id === studentId ? { ...s, [subjectCode]: sanitizedGrade } : s));
+        } else {
+          setStudentsPAT(prev => prev.map(s => s.id === studentId ? { ...s, [subjectCode]: sanitizedGrade } : s));
+        }
+
+        logAction(user.name, `Kemaskini TP ${selectedTerm} - ID Pelajar ${studentId} subjek ${subjectCode} -> TP ${sanitizedGrade}`);
+        
+        pushToCloud("updateTP", {
+          term: selectedTerm,
+          studentId,
+          subjectCode,
+          grade: sanitizedGrade
+        });
+      };
+
+      const currentReportStudent = useMemo(() => {
+        if (!selectedReportStudentId) return null;
+        const studentPPT = studentsPPT.find(s => s.id === selectedReportStudentId);
+        const studentPAT = studentsPAT.find(s => s.id === selectedReportStudentId);
+        return {
+          ppt: studentPPT,
+          pat: studentPAT,
+          info: studentPPT || studentPAT
+        };
+      }, [selectedReportStudentId, studentsPPT, studentsPAT]);
+
+      const renderEvidenceNameOnly = (evidenceStr) => {
+        try {
+          if (evidenceStr && evidenceStr.startsWith('{"name"') && evidenceStr.endsWith('}')) {
+            const fileObj = JSON.parse(evidenceStr);
+            if (fileObj.name) {
+              return `Fail: ${fileObj.name}`;
+            }
+          }
+        } catch(e) {}
+        return evidenceStr || 'N/A';
+      };
+
+      const triggerPrintPDF = (reportTitle) => {
+        const elementId = 
+          reportSubTab === 'slip-individu' ? 'print-slip-pbd' : 
+          reportSubTab === 'broadsheet-kelas' ? 'print-broadsheet-pbd' : 
+          reportSubTab === 'intervensi-laporan' ? 'print-intervensi-pbd' : 'print-analisis-pbd';
+          
+        const element = document.getElementById(elementId);
+        if (!element) {
+          triggerToast("Gagal menemui kandungan laporan untuk dicetak.", "error");
+          return;
+        }
+
+        const printWindow = window.open('', '_blank', 'width=1024,height=768');
+        if (!printWindow) {
+          triggerToast("Pelayar menyekat pop-up. Sila benarkan tetingkap timbul pelayar anda untuk menjana PDF.", "error");
+          return;
+        }
+
+        const docTitle = reportTitle.replace(/_/g, ' ');
+        const isLandscape = reportSubTab === 'broadsheet-kelas' || reportSubTab === 'intervensi-laporan' || reportSubTab === 'analisis-laporan';
+
+        // Escaping closing script tags to prevent premature Babel/HTML parsing errors
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>${docTitle}</title>
+              <script src="https://cdn.tailwindcss.com"><\/script>
+              <style>
+                @media print {
+                  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                  @page { 
+                    size: ${isLandscape ? 'A4 landscape' : 'A4 portrait'}; 
+                    margin: 15mm; 
+                  }
+                }
+                body {
+                  font-family: system-ui, -apple-system, sans-serif;
+                  background-color: white !important;
+                  color: black !important;
+                  padding: 24px;
+                }
+              </style>
+            </head>
+            <body class="bg-white text-black">
+              <div class="max-w-6xl mx-auto">
+                \$\{element.outerHTML\}
+              </div>
+              <script>
+                window.onload = function() {
+                  setTimeout(function() {
+                    window.print();
+                    window.close();
+                  }, 600);
+                };
+              <\/script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        logAction(user.name, `Memulakan proses eksport cetakan laporan: ${docTitle}`);
+      };
+
+      return (
+        <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+          
+          <div className="flex min-h-screen">
+            
+            {/* SIDEBAR */}
+            <aside className={`no-print w-64 border-r shrink-0 hidden md:block transition-colors bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800`}>
+              <div className="p-6 border-b border-dashed border-slate-700/30">
+                <div className="flex items-center gap-3">
+                  <div className={`h-10 w-10 rounded-xl ${t.bg} flex items-center justify-center text-white font-extrabold shadow-lg`}>
+                    PBD
+                  </div>
+                  <div>
+                    <h2 className={`font-bold text-[10px] leading-none uppercase ${t.textLight} tracking-wider`}>Pentaksiran</h2>
+                    <h1 className="font-extrabold text-xs tracking-tight">SK JENGKA 17</h1>
+                  </div>
+                </div>
+              </div>
+
+              <nav className="p-4 space-y-1">
+                <button onClick={() => setActiveTab('paparan-utama')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${activeTab === 'paparan-utama' ? `${t.bg} text-white shadow-md` : 'hover:bg-slate-500/10'}`}>
+                  <Icon name="home" />
+                  <span>Paparan Utama</span>
+                </button>
+                <button onClick={() => setActiveTab('pengisian-tp')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${activeTab === 'pengisian-tp' ? `${t.bg} text-white shadow-md` : 'hover:bg-slate-500/10'}`}>
+                  <Icon name="bookOpen" />
+                  <span>Pengisian TP</span>
+                </button>
+                <button onClick={() => setActiveTab('analisis-prestasi')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${activeTab === 'analisis-prestasi' ? `${t.bg} text-white shadow-md` : 'hover:bg-slate-500/10'}`}>
+                  <Icon name="trendingUp" />
+                  <span>Analisis Prestasi PBD</span>
+                </button>
+                <button onClick={() => setActiveTab('laporan-cetakan')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${activeTab === 'laporan-cetakan' ? `${t.bg} text-white shadow-md` : 'hover:bg-slate-500/10'}`}>
+                  <Icon name="fileText" />
+                  <span className="font-bold">Laporan & Cetakan PDF</span>
+                </button>
+                <button onClick={() => setActiveTab('pengurusan-kelas')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${activeTab === 'pengurusan-kelas' ? `${t.bg} text-white shadow-md` : 'hover:bg-slate-500/10'}`}>
+                  <Icon name="layers" />
+                  <span>Pengurusan Kelas</span>
+                </button>
+                <button onClick={() => setActiveTab('pengurusan-murid')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${activeTab === 'pengurusan-murid' ? `${t.bg} text-white shadow-md` : 'hover:bg-slate-500/10'}`}>
+                  <Icon name="userPlus" />
+                  <span>Pengurusan Murid</span>
+                </button>
+                <button onClick={() => setActiveTab('panitia-subjek')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${activeTab === 'panitia-subjek' ? `${t.bg} text-white shadow-md` : 'hover:bg-slate-500/10'}`}>
+                  <Icon name="graduationCap" />
+                  <span>Panitia & Subjek</span>
+                </button>
+                <button onClick={() => setActiveTab('intervensi-pbd')} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${activeTab === 'intervensi-pbd' ? `${t.bg} text-white shadow-md` : 'hover:bg-slate-500/10'}`}>
+                  <Icon name="award" />
+                  <span>Rekod Intervensi</span>
+                </button>
+              </nav>
+            </aside>
+
+            {/* KANDUNGAN UTAMA */}
+            <main className="flex-1 flex flex-col overflow-y-auto">
+              <header className="no-print px-6 py-4 border-b flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors bg-white border-slate-200 dark:bg-slate-900/60 dark:border-slate-800">
+                <div>
+                  <h1 className={`text-xl font-black tracking-tight ${t.text}`}>SK FELDA JENGKA 17</h1>
+                  <p className="text-xs text-slate-400 font-medium">Sistem Integrasi Pentaksiran Bilik Darjah (PBD) | Kod Sekolah: CBA9137</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-500/10 text-[10px] font-mono">
+                    {syncStatus === 'loading' && <Icon name="refreshCw" className="h-3 w-3 animate-spin text-amber-500" />}
+                    {syncStatus === 'success' && <Icon name="checkCircle" className="h-3 w-3 text-emerald-500" />}
+                    {(syncStatus === 'error' || syncStatus === 'offline') && <Icon name="alertTriangle" className="h-3 w-3 text-red-500" />}
+                    <span className="font-bold text-slate-400">
+                      {syncStatus === 'loading' ? 'Menyegerak...' : syncStatus === 'offline' ? 'Mod Tempatan' : `Kemas kini: ${lastSyncTime || 'Sedia'}`}
+                    </span>
+                  </div>
+                  <div className="flex rounded-lg overflow-hidden border border-slate-500/20 text-xs font-bold">
+                    <button onClick={() => setSelectedTerm('PPT')} className={`px-3 py-1.5 transition ${selectedTerm === 'PPT' ? 'bg-blue-600 text-white' : 'bg-transparent text-slate-400'}`}>PPT</button>
+                    <button onClick={() => setSelectedTerm('PAT')} className={`px-3 py-1.5 transition ${selectedTerm === 'PAT' ? 'bg-emerald-600 text-white' : 'bg-transparent text-slate-400'}`}>PAT</button>
+                  </div>
+                  <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-lg bg-slate-500/10 hover:bg-slate-500/20 text-slate-400 transition">
+                    {darkMode ? <Icon name="sun" className="h-4 w-4 text-amber-400" /> : <Icon name="moon" className="h-4 w-4" />}
+                  </button>
+                </div>
+              </header>
+
+              <div className="p-6 space-y-6 print:p-0">
+                {/* MODUL 1: PAPARAN UTAMA */}
+                {activeTab === 'paparan-utama' && (
+                  <div className="space-y-6 no-print">
+                    <div className={`rounded-2xl bg-gradient-to-br ${t.banner} text-white p-8 shadow-xl relative overflow-hidden`}>
+                      <div className="relative z-10 max-w-2xl">
+                        <span className="bg-white/20 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-widest uppercase">SESI AKADEMIK 2026/2027</span>
+                        <h2 className="text-3xl font-black tracking-tight mt-3 mb-2">Data Pentaksiran Bilik Darjah SK Felda Jengka 17</h2>
+                        <p className="text-sm text-slate-200 leading-relaxed font-light mb-3">Sistem integrasi pentaksiran masa nyata (real-time) dengan Google Sheets. Menjana rekod Tahap Penguasaan (TP1 sehingga TP6) serta laporan pencapaian individu dan broadsheet dalam bentuk PDF rasmi.</p>
+                        <div className="inline-flex flex-wrap items-center gap-4 text-xs font-semibold bg-black/20 px-3 py-1.5 rounded-lg text-slate-200 font-mono">
+                          <span>Kod Sekolah: CBA9137</span>
+                          <span className="opacity-40">|</span>
+                          <span>No. Telefon: 09-485 1305</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="p-5 rounded-xl border bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center"><Icon name="graduationCap" className="h-6 w-6" /></div>
+                        <div>
+                          <p className="text-xs text-slate-400 font-bold">Jumlah Murid Berdaftar</p>
+                          <h3 className="text-2xl font-black">{globalStats.totalStudents} Orang</h3>
+                        </div>
+                      </div>
+                      <div className="p-5 rounded-xl border bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center"><Icon name="layers" className="h-6 w-6" /></div>
+                        <div>
+                          <p className="text-xs text-slate-400 font-bold">Kelas Diselaraskan</p>
+                          <h3 className="text-2xl font-black">{globalStats.totalClasses} Kelas</h3>
+                        </div>
+                      </div>
+                      <div className="p-5 rounded-xl border bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><Icon name="trendingUp" className="h-6 w-6" /></div>
+                        <div>
+                          <p className="text-xs text-slate-400 font-bold">Purata TP Sekolah ({selectedTerm})</p>
+                          <h3 className="text-2xl font-black">TP {globalStats.averageTP}</h3>
+                        </div>
+                      </div>
+                      <div className="p-5 rounded-xl border bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 shadow-sm flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center"><Icon name="award" className="h-6 w-6" /></div>
+                        <div>
+                          <p className="text-xs text-slate-400 font-bold">Jumlah Kes Intervensi</p>
+                          <h3 className="text-2xl font-black">{interventions.length} Rekod</h3>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* MODUL 2: PENGISIAN TP */}
+                {activeTab === 'pengisian-tp' && (
+                  <div className="space-y-6 no-print">
+                    <div className="p-6 rounded-2xl border bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 shadow-sm">
+                      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-dashed border-slate-500/20 mb-6">
+                        <div>
+                          <h2 className="text-lg font-black font-semibold">Pengisian Tahap Penguasaan (PBD)</h2>
+                          <p className="text-xs text-slate-400">Pilih parameter subjek dan kelas di bawah untuk menetapkan atau menukar TP murid secara masa nyata.</p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <div className="flex flex-col">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Kelas Sasaran</label>
+                            <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold focus:outline-none ${t.ring} dark:bg-slate-900 dark:border-slate-800`}>
+                              {classes.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                            </select>
+                          </div>
+                          <div className="flex flex-col">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Mata Pelajaran</label>
+                            <select value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold focus:outline-none ${t.ring} dark:bg-slate-900 dark:border-slate-800`}>
+                              {subjects.map(s => <option key={s.code} value={s.code}>{s.name} ({s.code})</option>)}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-6 rounded-2xl border bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 shadow-sm">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left">
+                          <thead className="text-xs uppercase tracking-wider border-b bg-slate-50 text-slate-600 dark:bg-slate-900/60 dark:text-slate-400 dark:border-slate-800">
+                            <tr>
+                              <th className="px-4 py-3">Nama Pelajar</th>
+                              <th className="px-4 py-3">ID / MyKid</th>
+                              <th className="px-4 py-3 text-center">Tahap Penguasaan ({selectedSubject})</th>
+                              <th className="px-4 py-3 text-center">Tetapkan Tahap PBD</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-500/10">
+                            {classStats.classFiltered.length === 0 ? (
+                              <tr>
+                                <td colSpan="4" className="text-center py-8 text-xs text-slate-400">Tiada murid ditemui dalam kelas ini.</td>
+                              </tr>
+                            ) : (
+                              classStats.classFiltered.map(student => {
+                                const score = student[selectedSubject] || 0;
+                                return (
+                                  <tr key={student.id} className="hover:bg-slate-500/5 transition">
+                                    <td className="px-4 py-4 font-bold text-xs">{student.name}</td>
+                                    <td className="px-4 py-4 text-xs font-mono text-slate-400">{student.mykid}</td>
+                                    <td className="px-4 py-4 text-center">
+                                      <span className={`inline-block px-3 py-1 rounded-lg text-xs font-black ${TP_COLORS[score]?.bg}`}>
+                                        {score === 0 ? 'BD' : `TP ${score}`}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-4">
+                                      <div className="flex items-center justify-center gap-1.5">
+                                        {[0, 1, 2, 3, 4, 5, 6].map(tpValue => (
+                                          <button 
+                                            key={tpValue}
+                                            onClick={() => handleUpdateTP(student.id, selectedSubject, tpValue)}
+                                            className={`h-7 px-2.5 rounded-lg text-xs font-extrabold border transition-all ${
+                                              score === tpValue 
+                                                ? `${TP_COLORS[tpValue].bg} ring-2 ${t.ringStatic} scale-105` 
+                                                : 'bg-transparent text-slate-400 border-slate-500/30'
+                                            }`}
+                                          >
+                                            {tpValue === 0 ? 'BD' : tpValue}
+                                          </button>
+                                        ))}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* MODUL 3: ANALISIS PRESTASI PBD */}
+                {activeTab === 'analisis-prestasi' && (
+                  <div className="space-y-6 no-print">
+                    <div className="p-6 rounded-2xl border bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div>
+                        <h2 className="text-lg font-black">Analisis Prestasi PBD Mengikut Kelas ({selectedTerm})</h2>
+                        <p className="text-xs text-slate-400 font-medium">Laporan visual dinamik bagi pencapaian standard subjek.</p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold focus:outline-none ${t.ring} dark:bg-slate-900 dark:border-slate-800`}>
+                          {classes.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                        </select>
+                        <select value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold focus:outline-none ${t.ring} dark:bg-slate-900 dark:border-slate-800`}>
+                          {subjects.map(sub => <option key={sub.code} value={sub.code}>{sub.name}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="border border-slate-300 p-6 bg-white dark:bg-slate-900 dark:border-slate-800 rounded-2xl flex flex-col items-center">
+                        <h4 className="text-xs font-black text-slate-500 mb-3 uppercase tracking-wider">Taburan Bilangan Pelajar (Gred Bar)</h4>
+                        <BarChartPBD data={analysisStats.barData} categories={['0', '1', '2', '3', '4', '5', '6']} />
+                      </div>
+                      <div className="border border-slate-300 p-6 bg-white dark:bg-slate-900 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center">
+                        <h4 className="text-xs font-black text-slate-500 mb-3 uppercase tracking-wider">Pecahan Peratusan Penguasaan (Carta Pai)</h4>
+                        <DonutChartPBD data={analysisStats.donutData} />
+                      </div>
+                    </div>
+
+                    <div className="border border-slate-300 p-6 bg-white dark:bg-slate-900 dark:border-slate-800 rounded-2xl flex flex-col items-center">
+                      <h4 className="text-xs font-black text-slate-500 mb-3 uppercase tracking-wider">Graf Trend Pencapaian Purata (PPT vs PAT)</h4>
+                      <LineChartPBD 
+                        dataPPT={analysisStats.lineDataPPT} 
+                        dataPAT={analysisStats.lineDataPAT} 
+                        labels={analysisStats.lineLabels} 
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* MODUL 4: LAPORAN & CETAKAN PDF */}
+                {activeTab === 'laporan-cetakan' && (
+                  <div className="space-y-6">
+                    <div className="p-6 rounded-2xl border bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 shadow-sm no-print">
+                      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-dashed border-slate-500/20 mb-4">
+                        <div>
+                          <h2 className={`text-lg font-black ${t.text} flex items-center gap-2`}>
+                            <Icon name="printer" className="h-5 w-5" />
+                            <span>Modul Penjanaan & Cetakan PDF Rasmi</span>
+                          </h2>
+                          <p className="text-xs text-slate-400">Jana slip pentaksiran murid individu, rumusan broadsheet kelas, laporan kes intervensi sekolah, atau analisis prestasi.</p>
+                        </div>
+                        <div className="flex flex-wrap rounded-lg overflow-hidden border border-slate-500/20 text-xs font-bold">
+                          <button onClick={() => setReportSubTab('slip-individu')} className={`px-4 py-2 transition ${reportSubTab === 'slip-individu' ? `${t.bg} text-white` : 'bg-transparent text-slate-400'}`}>Slip Individu</button>
+                          <button onClick={() => setReportSubTab('broadsheet-kelas')} className={`px-4 py-2 transition ${reportSubTab === 'broadsheet-kelas' ? `${t.bg} text-white` : 'bg-transparent text-slate-400'}`}>Broadsheet Kelas</button>
+                          <button onClick={() => setReportSubTab('intervensi-laporan')} className={`px-4 py-2 transition ${reportSubTab === 'intervensi-laporan' ? `${t.bg} text-white` : 'bg-transparent text-slate-400'}`}>Rekod Intervensi</button>
+                          <button onClick={() => setReportSubTab('analisis-laporan')} className={`px-4 py-2 transition ${reportSubTab === 'analisis-laporan' ? `${t.bg} text-white` : 'bg-transparent text-slate-400'}`}>Laporan Analisis</button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="flex flex-col">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Kelas Laporan</label>
+                          <select value={selectedClass} onChange={(e) => {
+                            setSelectedClass(e.target.value);
+                            const list = selectedTerm === 'PPT' ? studentsPPT : studentsPAT;
+                            const filtered = list.filter(s => s.class === e.target.value);
+                            if (filtered.length > 0) setSelectedReportStudentId(filtered[0].id);
+                          }} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold focus:outline-none ${t.ring} dark:bg-slate-900 dark:border-slate-800`}>
+                            {reportSubTab === 'intervensi-laporan' && <option value="Semua">-- Semua Kelas --</option>}
+                            {classes.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                          </select>
+                        </div>
+
+                        {reportSubTab === 'slip-individu' && (
+                          <div className="flex flex-col">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Pilih Murid Sasaran</label>
+                            <select value={selectedReportStudentId} onChange={(e) => setSelectedReportStudentId(e.target.value)} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold focus:outline-none ${t.ring} dark:bg-slate-900 dark:border-slate-800`}>
+                              <option value="">-- Sila Pilih Pelajar --</option>
+                              {sortedStudentsSearch.filter(s => s.class === selectedClass).map(student => (
+                                <option key={student.id} value={student.id}>{student.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
+                        {reportSubTab === 'analisis-laporan' && (
+                          <div className="flex flex-col">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Mata Pelajaran Analisis</label>
+                            <select value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold focus:outline-none ${t.ring} dark:bg-slate-900 dark:border-slate-800`}>
+                              {subjects.map(sub => <option key={sub.code} value={sub.code}>{sub.name}</option>)}
+                            </select>
+                          </div>
+                        )}
+
+                        <div className="flex items-end justify-end md:col-span-1">
+                          <button onClick={() => {
+                            const title = reportSubTab === 'slip-individu' ? `Slip_PBD_${currentReportStudent?.info?.name || 'Murid'}` : `Laporan_PBD_${selectedClass}`;
+                            triggerPrintPDF(title);
+                          }} className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg ${t.bg} ${t.bgHover} text-white text-xs font-bold transition shadow-md`}>
+                            <Icon name="printer" />
+                            <span>Simpan / Muat Turun PDF</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* LAPORAN INDIVIDU SLIP */}
+                    {reportSubTab === 'slip-individu' && currentReportStudent && (
+                      <div id="print-slip-pbd" className="p-8 rounded-2xl border bg-white text-black border-slate-200 shadow-sm max-w-4xl mx-auto print-full">
+                        <div className="flex items-center justify-between border-b-2 border-double border-slate-600 pb-6 mb-6">
+                          <div className="flex items-center gap-4">
+                            <svg className={`w-16 h-16 ${t.text}`} viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill={t.svgFill} fillOpacity="0.1" />
+                              <circle cx="50" cy="50" r="15" fill="#f59e0b" />
+                              <line x1="50" y1="10" x2="50" y2="90" stroke={t.svgStroke} />
+                            </svg>
+                            <div>
+                              <h2 className="text-xs font-bold uppercase text-slate-500">Sekolah Kebangsaan Felda Jengka 17</h2>
+                              <h1 className={`text-xl font-black uppercase ${t.text}`}>Laporan Pentaksiran Bilik Darjah (PBD)</h1>
+                              <p className="text-[10px] text-slate-400">26400 Bandar Pusat Jengka, Pahang Darul Makmur | Tel: 09-485 1305 | Kod Sekolah: CBA9137</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 text-xs mb-6 border border-dashed border-slate-300 p-4 rounded-xl">
+                          <div>
+                            <p className="mb-1"><span className="font-bold text-slate-500">NAMA MURID:</span> <span className="font-extrabold uppercase ml-2">{currentReportStudent.info?.name}</span></p>
+                            <p><span className="font-bold text-slate-500">ID / NO. MYKID:</span> <span className="font-mono font-bold ml-2">{currentReportStudent.info?.mykid}</span></p>
+                          </div>
+                          <div>
+                            <p className="mb-1"><span className="font-bold text-slate-500">KELAS PENGAJIAN:</span> <span className="font-bold ml-2">{currentReportStudent.info?.class}</span></p>
+                            <p><span className="font-bold text-slate-500">SESI / AKADEMIK:</span> <span className="font-bold ml-2">2026/2027</span></p>
+                          </div>
+                        </div>
+
+                        <table className="w-full text-xs text-left border-collapse border border-slate-300">
+                          <thead>
+                            <tr className="bg-slate-50 text-slate-700">
+                              <th className="border border-slate-300 px-3 py-2 font-bold uppercase w-1/4">Mata Pelajaran</th>
+                              <th className="border border-slate-300 px-3 py-2 font-bold text-center w-16">TP PPT</th>
+                              <th className="border border-slate-300 px-3 py-2 font-bold text-center w-16">TP PAT</th>
+                              <th className="border border-slate-300 px-3 py-2 font-bold">Standard Tafsiran Penguasaan Pedagogi (KPM)</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-300">
+                            {subjects.map(sub => {
+                              const scorePPT = currentReportStudent.ppt?.[sub.code] || 0;
+                              const scorePAT = currentReportStudent.pat?.[sub.code] || 0;
+                              const score = selectedTerm === 'PPT' ? scorePPT : scorePAT;
+                              return (
+                                <tr key={sub.code}>
+                                  <td className="border border-slate-300 px-3 py-2 font-bold">{sub.name}</td>
+                                  <td className="border border-slate-300 px-3 py-2 text-center font-bold font-mono">{scorePPT === 0 ? "BD" : `TP${scorePPT}`}</td>
+                                  <td className="border border-slate-300 px-3 py-2 text-center font-bold font-mono">{scorePAT === 0 ? "BD" : `TP${scorePAT}`}</td>
+                                  <td className="border border-slate-300 px-3 py-2 text-slate-500">{getTafsiranPedagogi(sub.code, score)}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {/* LAPORAN BROADSHEET KELAS */}
+                    {reportSubTab === 'broadsheet-kelas' && (
+                      <div id="print-broadsheet-pbd" className="p-6 rounded-2xl border bg-white text-black border-slate-200 shadow-sm print-full">
+                        <div className="mb-6 pb-6 border-b border-dashed border-slate-300">
+                          <h3 className={`text-lg font-black ${t.text}`}>Laporan Broadsheet Prestasi Keseluruhan Kelas ({selectedClass})</h3>
+                          <p className="text-xs text-slate-400">Rumusan Tahap Penguasaan (TP) murid bagi semua subjek untuk penggal pentaksiran <strong>{selectedTerm}</strong>.</p>
+                        </div>
+                        <table className="w-full text-[10px] text-left border-collapse border border-slate-300">
+                          <thead>
+                            <tr className="bg-slate-50 text-slate-700">
+                              <th className="border border-slate-300 px-2 py-1.5 font-bold uppercase w-8">Bil</th>
+                              <th className="border border-slate-300 px-2 py-1.5 font-bold uppercase">Nama Murid</th>
+                              <th className="border border-slate-300 px-2 py-1.5 font-bold uppercase w-24">No. MyKid</th>
+                              {subjects.map(sub => (
+                                <th key={sub.code} className="border border-slate-300 px-2 py-1.5 font-bold text-center w-12">{sub.code}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-300">
+                            {classStats.classFiltered.map((student, idx) => (
+                              <tr key={student.id}>
+                                <td className="border border-slate-300 px-2 py-2 text-center font-bold">{idx + 1}</td>
+                                <td className="border border-slate-300 px-2 py-2 font-extrabold uppercase">{student.name}</td>
+                                <td className="border border-slate-300 px-2 py-2 font-mono">{student.mykid}</td>
+                                {subjects.map(sub => {
+                                  const score = student[sub.code] || 0;
+                                  return (
+                                    <td key={sub.code} className="border border-slate-300 px-2 py-2 text-center font-black font-mono">
+                                      {score === 0 ? "BD" : score}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {/* LAPORAN REKOD INTERVENSI */}
+                    {reportSubTab === 'intervensi-laporan' && (
+                      <div id="print-intervensi-pbd" className="p-6 rounded-2xl border bg-white text-black border-slate-200 shadow-sm print-full">
+                        <div className="flex items-center gap-4 border-b-2 border-double border-slate-600 pb-5 mb-6">
+                          <svg className={`w-12 h-12 ${t.text} shrink-0`} viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill={t.svgFill} fillOpacity="0.1" />
+                            <circle cx="50" cy="50" r="15" fill="#f59e0b" />
+                          </svg>
+                          <div>
+                            <h2 className="text-xs font-bold uppercase text-slate-500">Sekolah Kebangsaan Felda Jengka 17</h2>
+                            <h3 className={`text-base font-black uppercase ${t.text}`}>Laporan Rekod Tindakan Intervensi Akademik PBD</h3>
+                            <p className="text-[10px] text-slate-400">Rumusan Pelan Sokongan Pembelajaran Murid | Sesi Akademik 2026/2027</p>
+                          </div>
+                        </div>
+                        <table className="w-full text-[10px] text-left border-collapse border border-slate-300">
+                          <thead>
+                            <tr className="bg-slate-50 text-slate-700">
+                              <th className="border border-slate-300 px-2 py-1.5 font-bold uppercase w-8">Bil</th>
+                              <th className="border border-slate-300 px-2 py-1.5 font-bold uppercase">Nama Murid</th>
+                              <th className="border border-slate-300 px-2 py-1.5 font-bold uppercase w-16 text-center">Kelas</th>
+                              <th className="border border-slate-300 px-2 py-1.5 font-bold uppercase w-16 text-center">Subjek</th>
+                              <th className="border border-slate-300 px-2 py-1.5 font-bold uppercase">Aktiviti Bimbingan</th>
+                              <th className="border border-slate-300 px-2 py-1.5 font-bold uppercase">Bukti Evidens</th>
+                              <th className="border border-slate-300 px-2 py-1.5 font-bold uppercase w-16 text-center">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-300">
+                            {filteredInterventionsForReport.map((int, idx) => (
+                              <tr key={int.id || idx}>
+                                <td className="border border-slate-300 px-2 py-2 text-center">{idx + 1}</td>
+                                <td className="border border-slate-300 px-2 py-2 font-extrabold uppercase">{getStudentName(int.studentId)}</td>
+                                <td className="border border-slate-300 px-2 py-2 text-center">{getStudentClass(int.studentId)}</td>
+                                <td className={`border border-slate-300 px-2 py-2 text-center font-bold ${t.text}`}>{int.subjectCode}</td>
+                                <td className="border border-slate-300 px-2 py-2">{int.activity}</td>
+                                <td className="border border-slate-300 px-2 py-2">{renderEvidenceNameOnly(int.evidence)}</td>
+                                <td className="border border-slate-300 px-2 py-2 text-center font-bold">{int.status}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {/* LAPORAN ANALISIS PRESTASI */}
+                    {reportSubTab === 'analisis-laporan' && (
+                      <div id="print-analisis-pbd" className="p-6 rounded-2xl border bg-white text-black border-slate-200 shadow-sm print-full">
+                        <div className="flex items-center gap-4 border-b-2 border-double border-slate-600 pb-5 mb-6">
+                          <svg className={`w-14 h-14 ${t.text} shrink-0`} viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polygon points="50,10 90,30 90,70 50,90 10,70 10,30" fill={t.svgFill} fillOpacity="0.1" />
+                            <circle cx="50" cy="50" r="15" fill="#f59e0b" />
+                          </svg>
+                          <div>
+                            <h2 className="text-xs font-bold uppercase text-slate-500">Kementerian Pendidikan Malaysia</h2>
+                            <h1 className={`text-lg font-black uppercase ${t.text}`}>Sistem Pelaporan Analisis Prestasi PBD</h1>
+                            <p className="text-[10px] text-slate-400">SK Felda Jengka 17 | Kod Sekolah: CBA9137 | Tel: 09-485 1305</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-6 items-start mb-6">
+                          <div className="border border-slate-300 p-4 rounded-xl flex flex-col items-center">
+                            <h4 className="text-xs font-bold text-slate-500 mb-3 uppercase">Taburan Bilangan Pelajar (Gred Bar)</h4>
+                            <BarChartPBD data={analysisStats.barData} categories={['0', '1', '2', '3', '4', '5', '6']} />
+                          </div>
+                          <div className="border border-slate-300 p-4 rounded-xl flex flex-col items-center">
+                            <h4 className="text-xs font-bold text-slate-500 mb-3 uppercase">Pecahan Peratusan Penguasaan (Carta Pai)</h4>
+                            <DonutChartPBD data={analysisStats.donutData} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* MODUL 5: PENGURUSAN KELAS */}
+                {activeTab === 'pengurusan-kelas' && (
+                  <div className="space-y-6 no-print">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className={`text-lg font-black ${t.text}`}>Pengurusan Rekod Kelas</h2>
+                        <p className="text-xs text-slate-400 font-medium">Urus, selaras dan pantau pelantikan guru kelas.</p>
+                      </div>
+                      <button onClick={() => setIsAddingClass(true)} className={`flex items-center gap-2 px-4 py-2 rounded-xl ${t.bg} ${t.bgHover} text-white text-xs font-bold shadow-lg`}>
+                        <Icon name="plus" />
+                        <span>Daftar Kelas</span>
+                      </button>
+                    </div>
+
+                    {isAddingClass && (
+                      <div className={`p-6 rounded-2xl border ${t.border} bg-white dark:bg-slate-900 shadow-xl`}>
+                        <form onSubmit={handleAddClass} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                          <div className="flex flex-col">
+                            <label className="text-xs font-bold text-slate-400 mb-1">Tahun Pengajian</label>
+                            <select value={classForm.year} onChange={(e) => setClassForm({ ...classForm, year: e.target.value })} className={`rounded-lg border px-3 py-2 text-xs focus:outline-none ${t.ring} dark:bg-slate-950 dark:border-slate-800`}>
+                              {['1','2','3','4','5','6'].map(y => <option key={y} value={y}>Tahun {y}</option>)}
+                            </select>
+                          </div>
+                          <div className="flex flex-col">
+                            <label className="text-xs font-bold text-slate-400 mb-1">Nama Penuh Kelas</label>
+                            <input type="text" required placeholder="Cth: 1 Ibnu Sina" value={classForm.name} onChange={(e) => setClassForm({ ...classForm, name: e.target.value })} className={`rounded-lg border px-3 py-2 text-xs focus:outline-none ${t.ring} dark:bg-slate-950 dark:border-slate-800`} />
+                          </div>
+                          <div className="flex flex-col">
+                            <label className="text-xs font-bold text-slate-400 mb-1">Guru Kelas</label>
+                            <input type="text" required placeholder="Cth: Pn. Siti Aminah" value={classForm.classTeacher} onChange={(e) => setClassForm({ ...classForm, classTeacher: e.target.value })} className={`rounded-lg border px-3 py-2 text-xs focus:outline-none ${t.ring} dark:bg-slate-950 dark:border-slate-800`} />
+                          </div>
+                          <div className="flex gap-2">
+                            <button type="submit" className={`flex-1 rounded-lg ${t.bg} ${t.bgHover} text-white text-xs font-bold py-2 shadow-lg`}>Simpan</button>
+                            <button type="button" onClick={() => setIsAddingClass(false)} className="px-4 py-2 rounded-lg bg-slate-500/10 text-xs font-bold">Batal</button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+
+                    <div className="p-6 rounded-2xl border bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 shadow-sm">
+                      <table className="w-full text-sm text-left">
+                        <thead>
+                          <tr className="border-b text-xs uppercase text-slate-400">
+                            <th className="px-4 py-3">Tahun Kurikulum</th>
+                            <th className="px-4 py-3">Nama Kelas</th>
+                            <th className="px-4 py-3">Guru Kelas</th>
+                            <th className="px-4 py-3 text-right">Tindakan</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {classes.map(cls => (
+                            <tr key={cls.id} className="border-b border-slate-500/10">
+                              <td className={`px-4 py-4 font-bold ${t.textLight} text-xs`}>Tahun {cls.year}</td>
+                              <td className="px-4 py-4 font-extrabold text-xs">{cls.name}</td>
+                              <td className="px-4 py-4 font-semibold text-xs">{cls.classTeacher}</td>
+                              <td className="px-4 py-4 text-right">
+                                <button onClick={() => handleDeleteClass(cls.id, cls.name)} className="p-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition">
+                                  <Icon name="trash2" className="h-4 w-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* MODUL 6: PENGURUSAN MURID */}
+                {activeTab === 'pengurusan-murid' && (
+                  <div className="space-y-6 no-print">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <h2 className={`text-lg font-black ${t.text}`}>Saringan & Profiling Murid</h2>
+                        <p className="text-xs text-slate-400 font-medium">Urus, tambah dan saring profil murid di seluruh sekolah.</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <Icon name="search" className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                          <input type="text" placeholder="Cari murid..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className={`pl-9 pr-4 py-2 rounded-xl text-xs border focus:outline-none ${t.ring} dark:bg-slate-900`} />
+                        </div>
+                        <button onClick={() => {
+                          setStudentForm({ id: '', name: '', mykid: '', class: classes[0]?.name || '' });
+                          setEditingStudentId(null);
+                          setIsAddingStudent(true);
+                        }} className={`flex items-center gap-1.5 px-4 py-2 rounded-xl ${t.bg} ${t.bgHover} text-white text-xs font-bold shadow-lg`}>
+                          <Icon name="plus" />
+                          <span>Daftar Murid</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {isAddingStudent && (
+                      <div className={`p-6 rounded-2xl border ${t.border} bg-white dark:bg-slate-900 shadow-xl`}>
+                        <form onSubmit={handleSaveStudent} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                          <div className="flex flex-col md:col-span-2">
+                            <label className="text-xs font-bold text-slate-400 mb-1">Nama Penuh Murid (Huruf Besar)</label>
+                            <input type="text" required placeholder="Cth: MUHAMMAD AMIN" value={studentForm.name} onChange={(e) => setStudentForm({ ...studentForm, name: e.target.value.toUpperCase() })} className={`rounded-lg border px-3 py-2 text-xs focus:outline-none ${t.ring} dark:bg-slate-950 dark:border-slate-800`} />
+                          </div>
+                          <div className="flex flex-col">
+                            <label className="text-xs font-bold text-slate-400 mb-1">No. MyKid</label>
+                            <input type="text" required placeholder="Cth: 150111061234" value={studentForm.mykid} onChange={(e) => setStudentForm({ ...studentForm, mykid: e.target.value })} className={`rounded-lg border px-3 py-2 text-xs focus:outline-none ${t.ring} dark:bg-slate-950 dark:border-slate-800`} />
+                          </div>
+                          <div className="flex flex-col">
+                            <label className="text-xs font-bold text-slate-400 mb-1">Kelas Semasa</label>
+                            <select value={studentForm.class} onChange={(e) => setStudentForm({ ...studentForm, class: e.target.value })} className={`rounded-lg border px-3 py-2 text-xs focus:outline-none ${t.ring} dark:bg-slate-950 dark:border-slate-800`}>
+                              {classes.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                            </select>
+                          </div>
+                          <div className="flex gap-2 md:col-span-4 justify-end mt-2">
+                            <button type="submit" className={`px-6 py-2 rounded-lg ${t.bg} ${t.bgHover} text-white text-xs font-bold shadow-lg`}>Simpan</button>
+                            <button type="button" onClick={() => { setIsAddingStudent(false); setEditingStudentId(null); }} className="px-4 py-2 rounded-lg bg-slate-500/10 text-xs font-bold">Batal</button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+
+                    <div className="p-6 rounded-2xl border bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 shadow-sm">
+                      <table className="w-full text-sm text-left">
+                        <thead>
+                          <tr className="border-b text-xs uppercase text-slate-400">
+                            <th className="px-4 py-3">Nama Lengkap</th>
+                            <th className="px-4 py-3">No. MyKid</th>
+                            <th className="px-4 py-3">Kelas / Tahun</th>
+                            <th className="px-4 py-3 text-right">Tindakan</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sortedStudentsSearch.filter(s => studentManageClassFilter === 'Semua' || s.class === studentManageClassFilter).map(student => (
+                            <tr key={student.id} className="border-b border-slate-500/10">
+                              <td className={`px-4 py-4 font-bold text-xs ${t.textLight}`}>{student.name}</td>
+                              <td className="px-4 py-4 font-mono text-xs text-slate-400">{student.mykid}</td>
+                              <td className="px-4 py-4">
+                                <span className={`${t.bgLight} ${t.textLighter} px-2.5 py-1 rounded-md text-xs font-bold mr-1`}>{student.class}</span>
+                              </td>
+                              <td className="px-4 py-4 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <button onClick={() => {
+                                    setStudentForm({ id: student.id, name: student.name, mykid: student.mykid, class: student.class });
+                                    setEditingStudentId(student.id);
+                                    setIsAddingStudent(true);
+                                  }} className="p-1.5 rounded bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white transition">
+                                    <Icon name="edit" className="h-4 w-4" />
+                                  </button>
+                                  <button onClick={() => handleDeleteStudent(student.id, student.name)} className="p-1.5 rounded bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition">
+                                    <Icon name="trash2" className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* MODUL 7: PANITIA & SUBJEK */}
+                {activeTab === 'panitia-subjek' && (
+                  <div className="space-y-6 no-print">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className={`text-lg font-black ${t.text}`}>Panitia & Kurikulum Sekolah</h2>
+                        <p className="text-xs text-slate-400 font-medium">Urus, lantik dan pantau ketua panitia mata pelajaran.</p>
+                      </div>
+                      <button onClick={() => setIsAddingSubject(true)} className={`flex items-center gap-2 px-4 py-2 rounded-xl ${t.bg} ${t.bgHover} text-white text-xs font-bold shadow-lg`}>
+                        <Icon name="plus" />
+                        <span>Tambah Subjek</span>
+                      </button>
+                    </div>
+
+                    {isAddingSubject && (
+                      <div className={`p-6 rounded-2xl border ${t.border} bg-white dark:bg-slate-900 shadow-xl`}>
+                        <form onSubmit={handleSaveSubject} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                          <div className="flex flex-col">
+                            <label className="text-xs font-bold text-slate-400 mb-1">Kod Subjek</label>
+                            <input type="text" required placeholder="Cth: BM" value={subjectForm.code} onChange={(e) => setSubjectForm({ ...subjectForm, code: e.target.value.toUpperCase() })} className={`rounded-lg border px-3 py-2 text-xs focus:outline-none ${t.ring} dark:bg-slate-950 dark:border-slate-800`} />
+                          </div>
+                          <div className="flex flex-col md:col-span-2">
+                            <label className="text-xs font-bold text-slate-400 mb-1">Nama Penuh Subjek</label>
+                            <input type="text" required placeholder="Cth: Bahasa Melayu" value={subjectForm.name} onChange={(e) => setSubjectForm({ ...subjectForm, name: e.target.value })} className={`rounded-lg border px-3 py-2 text-xs focus:outline-none ${t.ring} dark:bg-slate-950 dark:border-slate-800`} />
+                          </div>
+                          <div className="flex flex-col">
+                            <label className="text-xs font-bold text-slate-400 mb-1">Ketua Panitia</label>
+                            <input type="text" required placeholder="Cth: Pn. Rohana" value={subjectForm.ketuaPanitia} onChange={(e) => setSubjectForm({ ...subjectForm, ketuaPanitia: e.target.value })} className={`rounded-lg border px-3 py-2 text-xs focus:outline-none ${t.ring} dark:bg-slate-950 dark:border-slate-800`} />
+                          </div>
+                          <div className="flex gap-2 md:col-span-4 justify-end mt-2">
+                            <button type="submit" className={`px-6 py-2 rounded-lg ${t.bg} ${t.bgHover} text-white text-xs font-bold shadow-lg`}>Simpan</button>
+                            <button type="button" onClick={() => setIsAddingSubject(false)} className="px-4 py-2 rounded-lg bg-slate-500/10 text-xs font-bold">Batal</button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {subjects.map(sub => (
+                        <div key={sub.code} className="p-5 rounded-2xl border bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                          <div>
+                            <span className={`text-xs font-mono font-black ${t.bgLight} ${t.textLight} px-3 py-1 rounded-full`}>{sub.code}</span>
+                            <h3 className="font-extrabold text-base mt-2 mb-1">{sub.name}</h3>
+                            <p className="text-xs text-slate-400">Ketua Panitia:</p>
+                            <p className="text-xs font-bold text-slate-600 dark:text-slate-300">{sub.ketuaPanitia || "Tiada Maklumat"}</p>
+                          </div>
+                          <div className="flex items-center justify-end gap-2 border-t border-dashed border-slate-200 dark:border-slate-800 pt-4 mt-4">
+                            <button onClick={() => handleDeleteSubject(sub.code, sub.name)} className="p-1 rounded bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition">
+                              <Icon name="trash2" className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* MODUL 8: REKOD INTERVENSI */}
+                {activeTab === 'intervensi-pbd' && (
+                  <div className="space-y-6 no-print">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className={`text-lg font-black ${t.text}`}>Pelan Intervensi Murid</h2>
+                        <p className="text-xs text-slate-400 font-medium">Bantu sokong murid yang memerlukan bimbingan standard PBD.</p>
+                      </div>
+                      <button onClick={() => setIsAddingIntervention(true)} className={`flex items-center gap-2 px-4 py-2 rounded-xl ${t.bg} ${t.bgHover} text-white text-xs font-bold shadow-lg`}>
+                        <Icon name="plus" />
+                        <span>Rekod Intervensi</span>
+                      </button>
+                    </div>
+
+                    {isAddingIntervention && (
+                      <div className={`p-6 rounded-2xl border ${t.border} bg-white dark:bg-slate-900 shadow-xl`}>
+                        <form onSubmit={handleAddIntervention} className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="flex flex-col">
+                              <label className="text-xs font-bold text-slate-400 mb-1">Pilih Pelajar</label>
+                              <select value={interventionForm.studentId} onChange={(e) => setInterventionForm({ ...interventionForm, studentId: e.target.value })} className={`rounded-lg border px-3 py-2 text-xs focus:outline-none ${t.ring} dark:bg-slate-950 dark:border-slate-800`} required>
+                                <option value="">-- Sila Pilih --</option>
+                                {sortedStudentsSearch.map(s => <option key={s.id} value={s.id}>{s.name} ({s.class})</option>)}
+                              </select>
+                            </div>
+                            <div className="flex flex-col">
+                              <label className="text-xs font-bold text-slate-400 mb-1">Mata Pelajaran</label>
+                              <select value={interventionForm.subjectCode} onChange={(e) => setInterventionForm({ ...interventionForm, subjectCode: e.target.value })} className={`rounded-lg border px-3 py-2 text-xs focus:outline-none ${t.ring} dark:bg-slate-950 dark:border-slate-800`}>
+                                {subjects.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
+                              </select>
+                            </div>
+                            <div className="flex flex-col">
+                              <label className="text-xs font-bold text-slate-400 mb-1">Status</label>
+                              <select value={interventionForm.status} onChange={(e) => setInterventionForm({ ...interventionForm, status: e.target.value })} className={`rounded-lg border px-3 py-2 text-xs focus:outline-none ${t.ring} dark:bg-slate-950 dark:border-slate-800`}>
+                                <option value="Dalam Proses">Dalam Proses</option>
+                                <option value="Selesai">Selesai</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="flex flex-col md:col-span-2">
+                              <label className="text-xs font-bold text-slate-400 mb-1">Aktiviti / Bimbingan</label>
+                              <input type="text" required placeholder="Cth: Latih tubi kosa kata" value={interventionForm.activity} onChange={(e) => setInterventionForm({ ...interventionForm, activity: e.target.value })} className={`rounded-lg border px-3 py-2 text-xs focus:outline-none ${t.ring} dark:bg-slate-950 dark:border-slate-800`} />
+                            </div>
+                            <div className="flex flex-col">
+                              <label className="text-xs font-bold text-slate-400 mb-1">Bukti Evidens (Teks)</label>
+                              <input type="text" required placeholder="Cth: Buku latihan m/s 12" value={interventionForm.evidence} onChange={(e) => setInterventionForm({ ...interventionForm, evidence: e.target.value })} className={`rounded-lg border px-3 py-2 text-xs focus:outline-none ${t.ring} dark:bg-slate-950 dark:border-slate-800`} />
+                            </div>
+                          </div>
+
+                          <div className="flex justify-end gap-2 pt-4 border-t border-slate-500/10">
+                            <button type="submit" className={`px-6 py-2 rounded-lg ${t.bg} ${t.bgHover} text-white text-xs font-bold shadow-lg`}>Simpan</button>
+                            <button type="button" onClick={() => setIsAddingIntervention(false)} className="px-4 py-2 rounded-lg bg-slate-500/10 text-xs font-bold">Batal</button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+
+                    <div className="p-6 rounded-2xl border bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800 shadow-sm">
+                      <table className="w-full text-sm text-left">
+                        <thead>
+                          <tr className="border-b text-xs uppercase text-slate-400">
+                            <th className="px-4 py-3">Nama Pelajar</th>
+                            <th className="px-4 py-3 text-center">Subjek</th>
+                            <th className="px-4 py-3">Aktiviti Bimbingan</th>
+                            <th className="px-4 py-3">Bukti Evidens</th>
+                            <th className="px-4 py-3 text-center">Status</th>
+                            <th className="px-4 py-3 text-right">Tindakan</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {interventions.map((int, idx) => (
+                            <tr key={int.id || idx} className="border-b border-slate-500/10">
+                              <td className="px-4 py-4">
+                                <span className={`font-extrabold text-xs ${t.textLight} block`}>{getStudentName(int.studentId)}</span>
+                                <span className="text-[10px] text-slate-400">Kelas: {getStudentClass(int.studentId)}</span>
+                              </td>
+                              <td className={`px-4 py-4 text-center font-extrabold text-xs ${t.text}`}>{int.subjectCode}</td>
+                              <td className="px-4 py-4 font-semibold text-xs">{int.activity}</td>
+                              <td className="px-4 py-4 text-xs text-slate-400">{renderEvidenceNameOnly(int.evidence)}</td>
+                              <td className="px-4 py-4 text-center">
+                                <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-black uppercase ${int.status === 'Selesai' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>{int.status}</span>
+                              </td>
+                              <td className="px-4 py-4 text-right">
+                                <button onClick={() => handleDeleteIntervention(int.id)} className="p-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition">
+                                  <Icon name="trash2" className="h-4 w-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </main>
+          </div>
+
+          {/* Modal Pengesahan Tindakan */}
+          {confirmModal.isOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm no-print">
+              <div className="w-full max-w-sm rounded-2xl p-6 border shadow-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-center gap-3 text-amber-500 mb-3">
+                  <Icon name="alertTriangle" className="h-6 w-6 shrink-0" />
+                  <h3 className="font-black text-sm uppercase tracking-wider">{confirmModal.title}</h3>
+                </div>
+                <p className="text-xs text-slate-400 mb-5 leading-relaxed">{confirmModal.message}</p>
+                <div className="flex items-center justify-end gap-2.5">
+                  <button onClick={confirmModal.onConfirm} className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition shadow-lg">Sahkan</button>
+                  <button onClick={confirmModal.onCancel} className="px-4 py-2 rounded-xl bg-slate-500/10 text-xs font-bold transition">Batal</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(<App />);
+  </script>
+</body>
+</html>
